@@ -1753,6 +1753,7 @@ __metadata:
     ajv: ^8.6.2
     chai: ^4.3.4
     dotenv: ^10.0.0
+    erc-payable-token: ^4.5.0
     eslint: ^7.32.0
     ethereum-waffle: ^3.4.0
     ethers: ^5.4.6
@@ -3887,6 +3888,13 @@ __metadata:
   version: 4.2.0
   resolution: "@openzeppelin/contracts@npm:4.2.0"
   checksum: 5dee34e72797ec5071a8123db1225ac255570bf47bf28f4c20b651efe1422d6581115e699de4472a4a7c704876b4ccced5f73c9f7bacbea2199c4829d9e92e23
+  languageName: node
+  linkType: hard
+
+"@openzeppelin/contracts@npm:4.5.0":
+  version: 4.5.0
+  resolution: "@openzeppelin/contracts@npm:4.5.0"
+  checksum: 31f874559ef0fff32b24af55d11f98c920435102ad5ed5db9ce6faa5cca3b7dcad2b9a3485b02195bdb4b1e53306f3405276d8ea55ed5e46cdcb8702a514a199
   languageName: node
   linkType: hard
 
@@ -10822,6 +10830,15 @@ __metadata:
   version: 2.2.1
   resolution: "env-paths@npm:2.2.1"
   checksum: 9579868bc73526de31682625d89aa08c83f3c87850218f9251f953bf4242428a1020e75cb201ca16b42f2874c3ca175ffc8aa47a88423b546711b7dbf86f79a8
+  languageName: node
+  linkType: hard
+
+"erc-payable-token@npm:^4.5.0":
+  version: 4.5.0
+  resolution: "erc-payable-token@npm:4.5.0"
+  dependencies:
+    "@openzeppelin/contracts": 4.5.0
+  checksum: c7499326cc7df2010cabc30b866a20dedbc62158d858198b58ea37f65f9b2827d2a828660cc6975df6b391275d10a8740d8580e54c46618655a46dbd40034582
   languageName: node
   linkType: hard
 

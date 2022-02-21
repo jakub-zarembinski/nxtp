@@ -43,6 +43,7 @@
     "@types/mocha": "^9.0.0",
     "@types/node": "^14.17.5",
     "chai": "^4.3.4",
+    "erc-payable-token": "^4.5.0",
     "ethereum-waffle": "^3.4.0",
     "ethers": "^5.4.6",
     "hardhat": "^2.8.0",
