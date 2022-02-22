@@ -5,7 +5,7 @@ import "./Router.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "erc-payable-token/contracts/token/ERC1363/ERC1363.sol";
 
-contract ChildToken is Ownable, ERC1363 {
+contract ChildAsset is Ownable, ERC1363 {
     constructor(string memory name, string memory symbol, uint256 amount)
         ERC20(name, symbol)
     {
@@ -27,30 +27,27 @@ contract ChildToken is Ownable, ERC1363 {
 
 contract RouterEXN is Router {
 
-  ChildToken public childToken;
-  uint256 public rootChainId;
   address public rootAssetId;
-
+  ChildAsset public childAsset;
+  
   constructor(address _routerFactory) Router(_routerFactory) {}
 
-  function initChildToken(
-    string memory _name,
-    string memory _symbol,
-    uint256 _amount,
-    uint256 _rootChainId
-  ) external onlyOwner {
-    require(address(childToken) == address(0x0), "CHILD_TOKEN_ALREADY_INITIALIZED");
-    childToken = new ChildToken(_name, _symbol, _amount);
-    childToken.approve(address(transactionManager), _amount);
-    transactionManager.addLiquidity(_amount, address(childToken));
-    rootChainId = _rootChainId;
-  }
-
-  function initRootToken(
+  function initRootAsset(
     address _rootAssetId
   ) external onlyOwner {
-    require(rootAssetId == address(0x0), "ROOT_TOKEN_ALREADY_INITIALIZED");
+    require(rootAssetId == address(0x0), "ROOT_ASSET_ALREADY_INITIALIZED");
     rootAssetId = _rootAssetId;
+  }
+
+  function initChildAsset(
+    string memory _name,
+    string memory _symbol,
+    uint256 _amount
+  ) external onlyOwner {
+    require(address(childAsset) == address(0x0), "CHILD_ASSET_ALREADY_INITIALIZED");
+    childAsset = new ChildAsset(_name, _symbol, _amount);
+    childAsset.approve(address(transactionManager), _amount);
+    transactionManager.addLiquidity(_amount, address(childAsset));
   }
 
   function removeLiquidity(
@@ -60,7 +57,7 @@ contract RouterEXN is Router {
     uint256 routerRelayerFee,
     bytes calldata signature
   ) public override {
-    require(assetId != rootAssetId, "REMOVING_LIQUDITY_FROM_ROOT_TOKEN_IS_NOT_ALLOWED");
+    require(assetId != rootAssetId, "REMOVING_LIQUDITY_FROM_ROOT_ASSET_NOT_ALLOWED");
     super.removeLiquidity(amount, assetId, routerRelayerFeeAsset, routerRelayerFee, signature);
   }
 
@@ -72,10 +69,10 @@ contract RouterEXN is Router {
   ) public payable override returns(ITransactionManager.TransactionData memory) {
     
     ITransactionManager.TransactionData memory txData = super.prepare(args, routerRelayerFeeAsset, routerRelayerFee, signature);
-    if (args.invariantData.sendingChainId == rootChainId && args.invariantData.receivingAssetId == address(childToken)) {
-      childToken.mint(args.amount);
-      childToken.approve(address(transactionManager), args.amount);
-      transactionManager.addLiquidity(args.amount, address(childToken));
+    if (args.invariantData.sendingAssetId == rootAssetId && args.invariantData.receivingAssetId == address(childAsset)) {
+      childAsset.mint(args.amount);
+      childAsset.approve(address(transactionManager), args.amount);
+      transactionManager.addLiquidity(args.amount, address(childAsset));
     }
     return txData;
   }
@@ -87,9 +84,9 @@ contract RouterEXN is Router {
     bytes calldata signature
   ) public override returns(ITransactionManager.TransactionData memory) {
     ITransactionManager.TransactionData memory txData = super.fulfill(args, routerRelayerFeeAsset, routerRelayerFee, signature);
-    if (args.txData.receivingChainId == rootChainId && args.txData.sendingAssetId == address(childToken)) {
-      transactionManager.removeLiquidity(args.txData.amount, address(childToken), payable(this));
-      childToken.burn(args.txData.amount);
+    if (args.txData.receivingAssetId == rootAssetId && args.txData.sendingAssetId == address(childAsset)) {
+      transactionManager.removeLiquidity(args.txData.amount, address(childAsset), payable(this));
+      childAsset.burn(args.txData.amount);
     }
     return txData;
   }
@@ -101,9 +98,9 @@ contract RouterEXN is Router {
     bytes calldata signature
   ) public override returns(ITransactionManager.TransactionData memory) {
     ITransactionManager.TransactionData memory txData = super.cancel(args, routerRelayerFeeAsset, routerRelayerFee, signature);
-    if (args.txData.sendingChainId == rootChainId && args.txData.receivingAssetId == address(childToken)) {
-      transactionManager.removeLiquidity(args.txData.amount, address(childToken), payable(this));
-      childToken.burn(args.txData.amount);
+    if (args.txData.sendingAssetId == rootAssetId && args.txData.receivingAssetId == address(childAsset)) {
+      transactionManager.removeLiquidity(args.txData.amount, address(childAsset), payable(this));
+      childAsset.burn(args.txData.amount);
     }
     return txData;
   }
