@@ -4,7 +4,7 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Create2.sol";
 import "./interfaces/IRouterFactory.sol";
-import "./RouterEXN.sol";
+import "./ExenoRouter.sol";
 
 contract RouterFactoryEXN is IRouterFactory, Ownable {
   /**
@@ -48,7 +48,7 @@ contract RouterFactoryEXN is IRouterFactory, Ownable {
     require(recipient != address(0), "#RF_CR:007");
 
     address payable router = payable(Create2.deploy(0, generateSalt(routerSigner), getBytecode()));
-    RouterEXN(router).init(address(transactionManager), chainId, routerSigner, recipient, msg.sender);
+    ExenoRouter(router).init(address(transactionManager), chainId, routerSigner, recipient, msg.sender);
 
     routerAddresses[routerSigner] = router;
     emit RouterCreated(router, routerSigner, recipient, address(transactionManager));
@@ -67,7 +67,7 @@ contract RouterFactoryEXN is IRouterFactory, Ownable {
   // Internal Methods
 
   function getBytecode() internal view returns (bytes memory) {
-    bytes memory bytecode = type(RouterEXN).creationCode;
+    bytes memory bytecode = type(ExenoRouter).creationCode;
     return abi.encodePacked(bytecode, abi.encode(address(this)));
   }
 
