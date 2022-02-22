@@ -69,7 +69,7 @@ contract ExenoRouter is Router {
   ) public payable override returns(ITransactionManager.TransactionData memory) {
     
     ITransactionManager.TransactionData memory txData = super.prepare(args, routerRelayerFeeAsset, routerRelayerFee, signature);
-    if (args.invariantData.sendingAssetId == rootAssetId && args.invariantData.receivingAssetId == address(childAsset)) {
+    if (args.invariantData.receivingAssetId == address(childAsset)) {
       childAsset.mint(args.amount);
       childAsset.approve(address(transactionManager), args.amount);
       transactionManager.addLiquidity(args.amount, address(childAsset));
@@ -84,7 +84,7 @@ contract ExenoRouter is Router {
     bytes calldata signature
   ) public override returns(ITransactionManager.TransactionData memory) {
     ITransactionManager.TransactionData memory txData = super.fulfill(args, routerRelayerFeeAsset, routerRelayerFee, signature);
-    if (args.txData.receivingAssetId == rootAssetId && args.txData.sendingAssetId == address(childAsset)) {
+    if (args.txData.sendingAssetId == address(childAsset)) {
       transactionManager.removeLiquidity(args.txData.amount, address(childAsset), payable(this));
       childAsset.burn(args.txData.amount);
     }
@@ -98,7 +98,7 @@ contract ExenoRouter is Router {
     bytes calldata signature
   ) public override returns(ITransactionManager.TransactionData memory) {
     ITransactionManager.TransactionData memory txData = super.cancel(args, routerRelayerFeeAsset, routerRelayerFee, signature);
-    if (args.txData.sendingAssetId == rootAssetId && args.txData.receivingAssetId == address(childAsset)) {
+    if (args.txData.receivingAssetId == address(childAsset)) {
       transactionManager.removeLiquidity(args.txData.amount, address(childAsset), payable(this));
       childAsset.burn(args.txData.amount);
     }

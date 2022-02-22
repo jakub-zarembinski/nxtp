@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/utils/Create2.sol";
 import "./interfaces/IRouterFactory.sol";
 import "./ExenoRouter.sol";
 
-contract RouterFactoryEXN is IRouterFactory, Ownable {
+contract ExenoRouterFactory is IRouterFactory, Ownable {
   /**
    * @dev The stored chain id of the contract, may be passed in to avoid any
    *      evm issues
