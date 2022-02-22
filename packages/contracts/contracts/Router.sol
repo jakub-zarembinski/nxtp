@@ -140,7 +140,7 @@ contract Router is Ownable {
     address routerRelayerFeeAsset,
     uint256 routerRelayerFee,
     bytes calldata signature
-  ) external {
+  ) public {
     if (msg.sender != routerSigner) {
       SignedRemoveLiquidityData memory payload = SignedRemoveLiquidityData({
         amount: amount,
@@ -168,7 +168,7 @@ contract Router is Ownable {
     address routerRelayerFeeAsset,
     uint256 routerRelayerFee,
     bytes calldata signature
-  ) external payable returns (ITransactionManager.TransactionData memory) {
+  ) public payable returns (ITransactionManager.TransactionData memory) {
     if (msg.sender != routerSigner) {
       SignedPrepareData memory payload = SignedPrepareData({
         args: args,
@@ -195,7 +195,7 @@ contract Router is Ownable {
     address routerRelayerFeeAsset,
     uint256 routerRelayerFee,
     bytes calldata signature
-  ) external returns (ITransactionManager.TransactionData memory) {
+  ) public returns (ITransactionManager.TransactionData memory) {
     if (msg.sender != routerSigner) {
       SignedFulfillData memory payload = SignedFulfillData({
         args: args,
@@ -221,7 +221,7 @@ contract Router is Ownable {
     address routerRelayerFeeAsset,
     uint256 routerRelayerFee,
     bytes calldata signature
-  ) external returns (ITransactionManager.TransactionData memory) {
+  ) public returns (ITransactionManager.TransactionData memory) {
     if (msg.sender != routerSigner) {
       SignedCancelData memory payload = SignedCancelData({
         args: args,
