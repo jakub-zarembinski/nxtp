@@ -1,64 +1,56 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "erc-payable-token/contracts/token/ERC1363/ERC1363.sol";
 import "./Router.sol";
 
 contract ChildAsset is Ownable, ERC1363 {
-    constructor(string memory name, string memory symbol, uint256 amount)
-        ERC20(name, symbol)
-    {
-        _mint(_msgSender(), amount);
-    }
+  string private constant NAME = "EXENO COIN";
+  string private constant SYMBOL = "EXN";
 
-    function mint(uint256 amount)
-        external onlyOwner
-    {
-        _mint(_msgSender(), amount);
-    }
+  constructor(uint256 amount)
+    ERC20(NAME, SYMBOL)
+  {
+    _mint(_msgSender(), amount);
+  }
 
-    function burn(uint256 amount)
-        external onlyOwner
-    {
-        _burn(_msgSender(), amount);
-    }
+  function mint(uint256 amount)
+    external onlyOwner
+  {
+    _mint(_msgSender(), amount);
+  }
+
+  function burn(uint256 amount)
+    external onlyOwner
+  {
+    _burn(_msgSender(), amount);
+  }
 }
 
 contract ExenoRouter is Router {
-
+  uint256 public constant BASE_LIQUIDITY = 1000 ether;
   address public rootAssetId;
   ChildAsset public childAsset;
-  
-  constructor(address _routerFactory) Router(_routerFactory) {}
 
-  function initRootAsset(
-    address _rootAssetId
-  ) external onlyOwner {
+  constructor(address _routerFactory)
+    Router(_routerFactory)
+  {}
+
+  function initRootAsset(address _rootAssetId) 
+    external onlyOwner
+  {
     require(rootAssetId == address(0x0), "ROOT_ASSET_ALREADY_INITIALIZED");
+    LibAsset.transferFromERC20(_rootAssetId, msg.sender, address(this), BASE_LIQUIDITY);
     rootAssetId = _rootAssetId;
   }
 
-  function initChildAsset(
-    string memory _name,
-    string memory _symbol,
-    uint256 _amount
-  ) external onlyOwner {
+  function initChildAsset()
+    external onlyOwner
+  {
     require(address(childAsset) == address(0x0), "CHILD_ASSET_ALREADY_INITIALIZED");
-    childAsset = new ChildAsset(_name, _symbol, _amount);
-    childAsset.approve(address(transactionManager), _amount);
-    transactionManager.addLiquidity(_amount, address(childAsset));
-  }
-
-  function removeLiquidity(
-    uint256 amount,
-    address assetId,
-    address routerRelayerFeeAsset,
-    uint256 routerRelayerFee,
-    bytes calldata signature
-  ) public override {
-    require(assetId != rootAssetId, "REMOVING_LIQUDITY_FROM_ROOT_ASSET_NOT_ALLOWED");
-    super.removeLiquidity(amount, assetId, routerRelayerFeeAsset, routerRelayerFee, signature);
+    childAsset = new ChildAsset(BASE_LIQUIDITY);
+    childAsset.approve(address(transactionManager), BASE_LIQUIDITY);
+    transactionManager.addLiquidity(BASE_LIQUIDITY, address(childAsset));
   }
 
   function prepare(
@@ -66,9 +58,15 @@ contract ExenoRouter is Router {
     address routerRelayerFeeAsset,
     uint256 routerRelayerFee,
     bytes calldata signature
-  ) public payable override returns(ITransactionManager.TransactionData memory) {
-    
-    ITransactionManager.TransactionData memory txData = super.prepare(args, routerRelayerFeeAsset, routerRelayerFee, signature);
+  )
+    public payable override returns(ITransactionManager.TransactionData memory)
+  {
+    ITransactionManager.TransactionData memory txData = super.prepare(
+      args,
+      routerRelayerFeeAsset,
+      routerRelayerFee,
+      signature
+    );
     if (args.invariantData.receivingAssetId == address(childAsset)) {
       childAsset.mint(args.amount);
       childAsset.approve(address(transactionManager), args.amount);
@@ -82,8 +80,15 @@ contract ExenoRouter is Router {
     address routerRelayerFeeAsset,
     uint256 routerRelayerFee,
     bytes calldata signature
-  ) public override returns(ITransactionManager.TransactionData memory) {
-    ITransactionManager.TransactionData memory txData = super.fulfill(args, routerRelayerFeeAsset, routerRelayerFee, signature);
+  )
+    public override returns(ITransactionManager.TransactionData memory)
+  {
+    ITransactionManager.TransactionData memory txData = super.fulfill(
+      args,
+      routerRelayerFeeAsset,
+      routerRelayerFee,
+      signature
+    );
     if (args.txData.sendingAssetId == address(childAsset)) {
       transactionManager.removeLiquidity(args.txData.amount, address(childAsset), payable(this));
       childAsset.burn(args.txData.amount);
@@ -96,13 +101,19 @@ contract ExenoRouter is Router {
     address routerRelayerFeeAsset,
     uint256 routerRelayerFee,
     bytes calldata signature
-  ) public override returns(ITransactionManager.TransactionData memory) {
-    ITransactionManager.TransactionData memory txData = super.cancel(args, routerRelayerFeeAsset, routerRelayerFee, signature);
+  )
+    public override returns(ITransactionManager.TransactionData memory)
+  {
+    ITransactionManager.TransactionData memory txData = super.cancel(
+      args,
+      routerRelayerFeeAsset,
+      routerRelayerFee,
+      signature
+    );
     if (args.txData.receivingAssetId == address(childAsset)) {
       transactionManager.removeLiquidity(args.txData.amount, address(childAsset), payable(this));
       childAsset.burn(args.txData.amount);
     }
     return txData;
   }
-
 }

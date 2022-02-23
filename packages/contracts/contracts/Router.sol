@@ -49,10 +49,10 @@ contract Router is Ownable {
   event RelayerFeeAdded(address assetId, uint256 amount, address caller);
   event RelayerFeeRemoved(address assetId, uint256 amount, address caller);
   event RemoveLiquidity(
-    uint256 amount, 
+    uint256 amount,
     address assetId,
     address routerRelayerFeeAsset,
-    uint256 routerRelayerFee, 
+    uint256 routerRelayerFee,
     address caller
   );
   event Prepare(
@@ -140,7 +140,7 @@ contract Router is Ownable {
     address routerRelayerFeeAsset,
     uint256 routerRelayerFee,
     bytes calldata signature
-  ) public virtual {
+  ) external {
     if (msg.sender != routerSigner) {
       SignedRemoveLiquidityData memory payload = SignedRemoveLiquidityData({
         amount: amount,
@@ -168,7 +168,7 @@ contract Router is Ownable {
     address routerRelayerFeeAsset,
     uint256 routerRelayerFee,
     bytes calldata signature
-  ) public virtual payable returns (ITransactionManager.TransactionData memory) {
+  ) public payable virtual returns (ITransactionManager.TransactionData memory) {
     if (msg.sender != routerSigner) {
       SignedPrepareData memory payload = SignedPrepareData({
         args: args,
