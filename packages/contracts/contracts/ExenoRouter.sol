@@ -135,8 +135,10 @@ contract ExenoRouter is Ownable {
     external onlyOwner
   {
     require(rootAssetId == address(0x0), "ROOT_ASSET_ALREADY_INITIALIZED");
-    LibAsset.transferFromERC20(_rootAssetId, msg.sender, address(this), BASE_LIQUIDITY);
+    require(IERC20(_rootAssetId).allowance(msg.sender, address(this)) >= BASE_LIQUIDITY, "REQUIRED_ALLOWANCE_HAS_NOT_BEEN_MADE");
     rootAssetId = _rootAssetId;
+    LibAsset.transferFromERC20(rootAssetId, msg.sender, address(this), BASE_LIQUIDITY);
+    assert(this.getRootAssetLockedInAmount() >= BASE_LIQUIDITY);
   }
 
   function initChildAsset()
@@ -177,6 +179,15 @@ contract ExenoRouter is Ownable {
 
     // Emit event
     emit RelayerFeeAdded(assetId, amount, msg.sender);
+  }
+
+  function getRootAssetLockedInAmount()
+    external view returns(uint256)
+  {
+    if (rootAssetId == address(0x0)) {
+      return 0;
+    }
+    return IERC20(rootAssetId).balanceOf(address(this));
   }
 
   function removeRelayerFee(uint256 amount, address assetId)
