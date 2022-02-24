@@ -8,13 +8,17 @@ import "./interfaces/ITransactionManager.sol";
 import "erc-payable-token/contracts/token/ERC1363/ERC1363.sol";
 
 contract ChildAsset is Ownable, ERC1363 {
+
   string private constant NAME = "EXENO COIN";
   string private constant SYMBOL = "EXN";
 
-  constructor(uint256 amount)
+  uint256 public immutable baselineAmount;
+
+  constructor(uint256 _baselineAmount)
     ERC20(NAME, SYMBOL)
   {
-    _mint(_msgSender(), amount);
+    _mint(_msgSender(), _baselineAmount);
+    baselineAmount = _baselineAmount;
   }
 
   function mint(uint256 amount)
@@ -31,8 +35,7 @@ contract ChildAsset is Ownable, ERC1363 {
 }
 
 contract ExenoRouter is Ownable {
-  uint256 public constant BASE_LIQUIDITY = 1000 ether;
-  
+
   address public immutable routerFactory;
 
   ITransactionManager public transactionManager;
@@ -121,12 +124,6 @@ contract ExenoRouter is Ownable {
     _;
   }
 
-  // Prevents bridging functionality when root and child assets are not properly set up
-  modifier onlyWhenConfigured() {
-    require(rootAssetId != address(0x0) || address(childAsset) != address(0x0), "ONLY_WHEN_CONFIGURED");
-    _;
-  }
-
   function init(
     address _transactionManager,
     uint256 _chainId,
@@ -146,16 +143,15 @@ contract ExenoRouter is Ownable {
   function initRootAsset(address _rootAssetId) 
     external onlyOwner onlyWhenUnconfigured
   {
-    require(IERC20(_rootAssetId).balanceOf(address(this)) >= BASE_LIQUIDITY, "REQUIRED_BALANCE_IS_NOT_AVAILABLE");
     rootAssetId = _rootAssetId;
   }
 
-  function initChildAsset()
+  function initChildAsset(uint256 _baselineAmount)
     external onlyOwner onlyWhenUnconfigured
   {
-    childAsset = new ChildAsset(BASE_LIQUIDITY);
-    childAsset.approve(address(transactionManager), BASE_LIQUIDITY);
-    transactionManager.addLiquidity(BASE_LIQUIDITY, address(childAsset));
+    childAsset = new ChildAsset(_baselineAmount);
+    childAsset.approve(address(transactionManager), _baselineAmount);
+    transactionManager.addLiquidity(_baselineAmount, address(childAsset));
   }
 
   function setRecipient(address _recipient)
@@ -189,10 +185,16 @@ contract ExenoRouter is Ownable {
     emit RelayerFeeAdded(assetId, amount, msg.sender);
   }
 
-  function getLockedInAmount()
+  function getRootAssetLockedInAmount()
     external view returns(uint256)
   {
     return rootAssetId == address(0x0) ? 0 : IERC20(rootAssetId).balanceOf(address(this));
+  }
+
+  function getChildAssetBaselineAmount()
+    external view returns(uint256)
+  {
+    return address(childAsset) == address(0x0) ? 0 : childAsset.baselineAmount();
   }
 
   function removeRelayerFee(uint256 amount, address assetId)
@@ -245,7 +247,7 @@ contract ExenoRouter is Ownable {
     uint256 routerRelayerFee,
     bytes calldata signature
   )
-    external payable onlyWhenConfigured returns(ITransactionManager.TransactionData memory)
+    external payable returns(ITransactionManager.TransactionData memory)
   {
     if (msg.sender != routerSigner) {
       SignedPrepareData memory payload = SignedPrepareData({
@@ -281,7 +283,7 @@ contract ExenoRouter is Ownable {
     uint256 routerRelayerFee,
     bytes calldata signature
   )
-    external onlyWhenConfigured returns(ITransactionManager.TransactionData memory)
+    external returns(ITransactionManager.TransactionData memory)
   {
     if (msg.sender != routerSigner) {
       SignedFulfillData memory payload = SignedFulfillData({
