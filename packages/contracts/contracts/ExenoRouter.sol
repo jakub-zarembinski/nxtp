@@ -197,6 +197,12 @@ contract ExenoRouter is Ownable {
     return address(childAsset) == address(0x0) ? 0 : childAsset.baselineAmount();
   }
 
+  function withdrawCash()
+    external onlyOwner
+  {
+		LibAsset.transferNativeAsset(payable(msg.sender), address(this).balance);
+  }
+
   function removeRelayerFee(uint256 amount, address assetId)
     external onlyOwner
   {
